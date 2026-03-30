@@ -1,0 +1,49 @@
+# Python virtual environment
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Model weights and checkpoints
+*.pth
+*.onnx
+*.pb
+checkpoints/
+saved_models/
+
+# AI model repositories (cloned externally)
+U-2-Net/
+segment-anything/
+MODNet/
+RVM/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+temp/
+tmp/
+uploads/
+outputs/
+
+serviceAccountKey.json
