@@ -124,9 +124,10 @@ PY
 
 if [ "$#" -eq 0 ]; then
   echo "No command supplied, launching uvicorn via python -m uvicorn"
-  # Use the Python interpreter to run uvicorn so PYTHONPATH and current working
-  # directory are respected in the same process environment.
-  exec python -m uvicorn app:app --host 0.0.0.0 --port 8000
+  # Use the platform PORT if provided (e.g. Render sets $PORT). Default to 8000.
+  PORT=${PORT:-8000}
+  # Use --proxy-headers so the app sees client IPs when behind a proxy/load balancer
+  exec python -m uvicorn app:app --host 0.0.0.0 --port "$PORT" --proxy-headers
 else
   exec "$@"
 fi
