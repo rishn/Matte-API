@@ -1,7 +1,7 @@
-# <img src="assets/Matte.png" alt="Wordler logo" width="22" height="22" /> Matte: API
+# <img src="https://github.com/rishn/Matte/blob/main/assets/Matte.png" alt="Matte logo" width="22" height="22" /> Matte - API
 
 <p align="center">
-  <img src="assets/Expanse.png" alt="Expanse" width="60%" height="60%" />
+  <img src="https://github.com/rishn/Matte/blob/main/assets/Expanse.png" alt="Expanse" width="60%" height="60%" />
 </p>
 
 <p align="center">

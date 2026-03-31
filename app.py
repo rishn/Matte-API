@@ -127,11 +127,31 @@ else:
     supabase = None
 
 # CORS middleware for frontend communication
+# Configure CORS origins via environment variable for easier deployment configuration.
+# Set `ALLOWED_ORIGINS` to a comma-separated list of origins (e.g. https://example.com,https://app.example.com)
+allowed_env = os.environ.get('ALLOWED_ORIGINS')
+if allowed_env:
+    allowed_origins = [o.strip() for o in allowed_env.split(',') if o.strip()]
+else:
+    # sensible defaults for local development and Firebase hosting
+    allowed_origins = [
+        "http://localhost:3000",
+        "http://localhost:4173"
+    ]
+
+# Whether to allow credentials (cookies/Authorization). Can be overridden with env `CORS_ALLOW_CREDENTIALS`.
+allow_creds_env = os.environ.get('CORS_ALLOW_CREDENTIALS', 'true').lower()
+allow_credentials = allow_creds_env in ('1', 'true', 'yes')
+
+# Note: Browsers reject Access-Control-Allow-Origin: '*' when credentials are allowed.
+if allowed_origins == ['*'] and allow_credentials:
+    # avoid sending invalid combination; disable credentials if wildcard is used
+    allow_credentials = False
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://localhost:4173", "https://matte-educify-app.web.app", "https://matte-educify-app.firebaseapp.com"],
-    # Include Vite preview (`:4173`) and Firebase hosting domains used by the frontend
-    allow_credentials=True,
+    allow_origins=allowed_origins,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
