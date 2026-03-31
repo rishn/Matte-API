@@ -129,7 +129,8 @@ else:
 # CORS middleware for frontend communication
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],  # React dev servers
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://localhost:4173", "https://matte-educify-app.web.app", "https://matte-educify-app.firebaseapp.com"],
+    # Include Vite preview (`:4173`) and Firebase hosting domains used by the frontend
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
