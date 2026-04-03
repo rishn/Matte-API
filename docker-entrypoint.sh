@@ -1,20 +1,17 @@
 # Ensure weights dir exists under model cache
-mkdir -p "${MODEL_CACHE_DIR}/weights"
 #!/usr/bin/env bash
 set -e
 
-# Simple entrypoint: optionally download model weights, then exec the passed command (or uvicorn)
+# Simple entrypoint: prefer baked-in weights, optionally download missing weights,
+# then exec the passed command (or uvicorn if none provided).
 
 echo "[entrypoint] starting..."
 
-# Default download locations (if you prefer, set env vars to override):
-# U2NET_DOWNLOAD_URL, SAM_DOWNLOAD_URL
-
+# Lightweight downloader: download $1 -> $2.part then move into place
 download_to_tmp() {
-  # Lightweight helper that downloads $1 -> $2.part then moves into place.
   local url="$1"; local out="$2"
   mkdir -p "$(dirname "$out")"
-  tmp_dest="${out}.part"
+  local tmp_dest="${out}.part"
   if echo "$url" | grep -qi "drive.google.com" && command -v gdown >/dev/null 2>&1; then
     gdown -O "$tmp_dest" "$url" || true
   elif command -v wget >/dev/null 2>&1; then
@@ -35,15 +32,13 @@ download_to_tmp() {
 
 # Allow configurable model cache directory (default /models)
 MODEL_CACHE_DIR=${MODEL_CACHE_DIR:-/models}
-
-# Ensure weights dir exists under model cache
 mkdir -p "${MODEL_CACHE_DIR}/weights"
 
 # Normalize USE_SAM
 USE_SAM=${USE_SAM:-true}
 use_sam_lc=$(echo "$USE_SAM" | tr '[:upper:]' '[:lower:]')
 
-# prefer_or_download: prefer baked-in path or existing model cache file; otherwise download
+# prefer_or_download: prefer baked path or existing cache file; otherwise download
 prefer_or_download() {
   local url="$1"; local dest="$2"; local baked="$3"
   if [ -n "$baked" ] && [ -f "$baked" ]; then
@@ -63,7 +58,7 @@ prefer_or_download() {
   download_to_tmp "$url" "$dest" && { echo "$dest"; return 0; } || return 1
 }
 
-# Handle U2Net: prefer baked-in (/app/models/weights) then model cache, otherwise download
+# -- U2Net: prefer baked-in (/app/models/weights) then MODEL_CACHE_DIR, otherwise download
 U2NET_DEST=${U2NET_DEST:-${MODEL_CACHE_DIR}/weights/u2netp.pth}
 BAKED_U2NET=/app/models/weights/u2netp.pth
 chosen_u2=$(prefer_or_download "$U2NET_DOWNLOAD_URL" "$U2NET_DEST" "$BAKED_U2NET") || true
@@ -74,7 +69,7 @@ else
   echo "[entrypoint] no U2Net weights found or configured"
 fi
 
-# Handle SAM if enabled. We avoid baking SAM by default but allow download.
+# -- SAM (optional)
 if [ "$use_sam_lc" = "1" ] || [ "$use_sam_lc" = "true" ] || [ "$use_sam_lc" = "yes" ]; then
   SAM_DEST=${SAM_DEST:-${MODEL_CACHE_DIR}/weights/sam_vit_b_01ec64.pth}
   BAKED_SAM=/app/models/weights/sam_vit_b_01ec64.pth
@@ -117,3 +112,4 @@ if [ "$#" -eq 0 ]; then
 else
   exec "$@"
 fi
+  PORT=${PORT:-8000}
