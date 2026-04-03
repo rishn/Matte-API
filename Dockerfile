@@ -25,7 +25,6 @@ RUN pip install --no-cache-dir gdown
 # U2NET_DOWNLOAD_URL / SAM_DOWNLOAD_URL as build args to bake weights into image.
 ARG BUILD_MODELS=false
 ARG U2NET_DOWNLOAD_URL=""
-ARG SAM_DOWNLOAD_URL=""
 ENV MODEL_CACHE_DIR=/models
 
 RUN if [ "${BUILD_MODELS}" = "true" ]; then \
@@ -39,14 +38,7 @@ RUN if [ "${BUILD_MODELS}" = "true" ]; then \
                     wget -q -O /app/models/weights/u2netp.pth "${U2NET_DOWNLOAD_URL}" || true; \
                 fi; \
             fi; \
-            # SAM -> place into package weights dir (sam_vit_b_01ec64.pth)
-            if [ -n "${SAM_DOWNLOAD_URL}" ]; then \
-                if command -v wget >/dev/null 2>&1; then \
-                    wget -q --show-progress -O /app/models/weights/sam_vit_b_01ec64.pth "${SAM_DOWNLOAD_URL}" || true; \
-                elif command -v curl >/dev/null 2>&1; then \
-                    curl -sSL -o /app/models/weights/sam_vit_b_01ec64.pth "${SAM_DOWNLOAD_URL}" || true; \
-                fi; \
-            fi; \
+            # Note: SAM is intentionally NOT downloaded at build-time here.
         else \
             echo "[dockerfile] skipping build-time model download"; \
         fi
