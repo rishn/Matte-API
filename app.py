@@ -22,6 +22,11 @@ from PIL import Image
 import io
 import base64
 from pathlib import Path
+import logging
+
+# Basic logger for startup/model-load messages
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('photo_studio')
 
 # Import model handlers (will be implemented)
 from models.u2net_handler import U2NetHandler
@@ -175,6 +180,33 @@ def get_sam():
     if sam_handler is None:
         sam_handler = SAMHandler()
     return sam_handler
+
+
+# Preload models on application startup to avoid heavy first-request spikes.
+# U2Net is always preloaded. SAM preload is controlled by the PRELOAD_SAM env var
+# (set to 'false', '0', or 'no' to skip SAM preload).
+@app.on_event("startup")
+def preload_models_on_startup():
+    try:
+        logger.info("Startup: preloading U2Net model")
+        # Force load U2Net weights into memory
+        get_u2net()
+        logger.info("U2Net preload complete")
+    except Exception as e:
+        logger.exception("Failed to preload U2Net at startup: %s", e)
+
+    # Decide whether to preload SAM (defaults to true)
+    preload_sam_env = os.environ.get('PRELOAD_SAM', 'true').lower()
+    preload_sam = preload_sam_env in ('1', 'true', 'yes')
+    if preload_sam:
+        try:
+            logger.info("Startup: preloading SAM model")
+            get_sam()
+            logger.info("SAM preload complete")
+        except Exception as e:
+            logger.exception("Failed to preload SAM at startup: %s", e)
+    else:
+        logger.info("PRELOAD_SAM set to false; skipping SAM preload")
 
 
 # ==================== Request/Response Models ====================
