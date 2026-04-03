@@ -22,6 +22,7 @@ from PIL import Image
 import io
 import base64
 from pathlib import Path
+import logging
 
 # Import model handlers (will be implemented)
 from models.u2net_handler import U2NetHandler
@@ -46,6 +47,10 @@ except Exception:
     dns = None
 
 app = FastAPI(title="Photo Studio API", version="2.6.4")
+
+# Configure basic logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("photo-studio")
 
 # Load environment variables from .env if present
 load_dotenv()
@@ -175,6 +180,19 @@ def get_sam():
     if sam_handler is None:
         sam_handler = SAMHandler()
     return sam_handler
+
+
+@app.on_event("startup")
+def preload_models():
+    """Preload heavy models at process startup to avoid cold-start request spikes."""
+    try:
+        logger.info("Preloading models at startup...")
+        # Call getters to force model initialization/load
+        get_u2net()
+        get_sam()
+        logger.info("Models preloaded successfully")
+    except Exception as e:
+        logger.exception("Model preload failed during startup: %s", e)
 
 
 # ==================== Request/Response Models ====================
@@ -574,6 +592,7 @@ async def auto_segment(file: UploadFile = File(...)):
     """
     try:
         content = await file.read()
+        logger.info("auto_segment: received file=%s size=%s", getattr(file, 'filename', '<unknown>'), len(content) if content is not None else 0)
         if not content:
             raise HTTPException(status_code=400, detail='Empty file')
 
@@ -617,8 +636,9 @@ async def auto_segment(file: UploadFile = File(...)):
     except HTTPException:
         raise
     except Exception as e:
+        logger.exception("Unhandled error in auto_segment: %s", e)
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail='Internal server error during segmentation')
 
 
 @app.post("/api/adjust")
