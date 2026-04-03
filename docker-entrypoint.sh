@@ -54,9 +54,15 @@ if [ ! -z "$U2NET_DOWNLOAD_URL" ]; then
 fi
 
 # Download SAM weights if env var provided
-if [ ! -z "$SAM_DOWNLOAD_URL" ]; then
-  SAM_DEST=${SAM_DEST:-${MODEL_CACHE_DIR}/weights/sam_vit_b_01ec64.pth}
-  download_if_needed "$SAM_DOWNLOAD_URL" "$SAM_DEST"
+USE_SAM=${USE_SAM:-true}
+use_sam_lc=$(echo "$USE_SAM" | tr '[:upper:]' '[:lower:]')
+if [ "$use_sam_lc" = "1" ] || [ "$use_sam_lc" = "true" ] || [ "$use_sam_lc" = "yes" ]; then
+  if [ ! -z "$SAM_DOWNLOAD_URL" ]; then
+    SAM_DEST=${SAM_DEST:-${MODEL_CACHE_DIR}/weights/sam_vit_b_01ec64.pth}
+    download_if_needed "$SAM_DOWNLOAD_URL" "$SAM_DEST"
+  fi
+else
+  echo "[entrypoint] USE_SAM is false; skipping SAM download"
 fi
 
 echo "[entrypoint] models directory listing:"
@@ -73,9 +79,13 @@ if [ ! -z "$U2NET_DOWNLOAD_URL" ]; then
 fi
 
 # Download SAM weights if env var provided
-if [ ! -z "$SAM_DOWNLOAD_URL" ]; then
-  SAM_DEST=${SAM_DEST:-${MODEL_CACHE_DIR}/weights/sam_vit_b_01ec64.pth}
-  download_if_needed "$SAM_DOWNLOAD_URL" "$SAM_DEST"
+if [ "$use_sam_lc" = "1" ] || [ "$use_sam_lc" = "true" ] || [ "$use_sam_lc" = "yes" ]; then
+  if [ ! -z "$SAM_DOWNLOAD_URL" ]; then
+    SAM_DEST=${SAM_DEST:-${MODEL_CACHE_DIR}/weights/sam_vit_b_01ec64.pth}
+    download_if_needed "$SAM_DOWNLOAD_URL" "$SAM_DEST"
+  fi
+else
+  echo "[entrypoint] USE_SAM is false; skipping SAM download"
 fi
 
 echo "[entrypoint] model cache listing (${MODEL_CACHE_DIR}/weights):"

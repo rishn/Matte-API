@@ -161,6 +161,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Feature flags
+USE_SAM = os.environ.get('USE_SAM', 'true').lower() in ('1', 'true', 'yes')
+
 # Global model instances (lazy loaded)
 u2net_handler = None
 sam_handler = None
@@ -195,10 +198,10 @@ def preload_models_on_startup():
     except Exception as e:
         logger.exception("Failed to preload U2Net at startup: %s", e)
 
-    # Decide whether to preload SAM (defaults to true)
+    # Decide whether to preload SAM (defaults to true) and respect global USE_SAM
     preload_sam_env = os.environ.get('PRELOAD_SAM', 'true').lower()
     preload_sam = preload_sam_env in ('1', 'true', 'yes')
-    if preload_sam:
+    if USE_SAM and preload_sam:
         try:
             logger.info("Startup: preloading SAM model")
             get_sam()
@@ -206,7 +209,7 @@ def preload_models_on_startup():
         except Exception as e:
             logger.exception("Failed to preload SAM at startup: %s", e)
     else:
-        logger.info("PRELOAD_SAM set to false; skipping SAM preload")
+        logger.info("SAM disabled or PRELOAD_SAM set to false; skipping SAM preload")
 
 
 # ==================== Request/Response Models ====================
@@ -532,6 +535,9 @@ async def interactive_segment(request: SegmentationRequest):
     Supports point and box prompts for precise selection
     """
     try:
+        # Feature flag: if SAM is disabled, return 503
+        if not USE_SAM:
+            raise HTTPException(status_code=503, detail='Interactive segmentation is disabled on this server')
         # Decode image
         img = decode_base64_image(request.image)
         
