@@ -405,6 +405,17 @@ pip install dnspython
 
 The frontend uses this endpoint before attempting signup; the check is best-effort and will not block signup on transient network/DNS errors by default.
 
+## Deployment
+
+- **Frontend — Firebase Hosting + GitHub Actions:** 
+   - The frontend is hosted on Firebase Hosting. In CI the workflow creates a `.env.production` (or sets build-time secrets) containing `VITE_API_URL` and `VITE_USE_SAM` before running `npm run build` so Vite embeds the build-time flags. Changing any `VITE_` environment variables requires rebuilding the frontend. 
+   - A sample GitHub Actions workflow has been set up at `frontend/.github/workflows/firebase-hosting.yml`, **to enable automatic build and deploy on repo updates.** The workflow requires the repository secrets `FIREBASE_TOKEN`, `VITE_API_URL`, and `VITE_USE_SAM` to be configured.
+
+- **Backend — Render:** 
+   - The backend is hosted as a Render Web Service (or similar). Server environment variables include `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `FIREBASE_*`, `USE_SAM`, and `MODEL_CACHE_DIR`. 
+   - For reliable model availability, U2Net is baked into the image at build time when `BUILD_MODELS=true` and `U2NET_DOWNLOAD_URL` are used, or a persistent disk is attached and mounted at `/models` so weights persist across instances. The `docker-entrypoint.sh` script begins with a proper shebang (`#!/usr/bin/env bash`) on the first line and uses LF line endings; the image should be rebuilt after any entrypoint changes.
+
+
 ## Roadmap
 
 - [X] Filters + custom adjustments utility
